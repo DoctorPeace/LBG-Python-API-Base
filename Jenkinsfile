@@ -5,7 +5,6 @@ pipeline {
             steps {
                 sh '''
                 ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
-                
                 docker stop flask-app || echo "flask-app not running"
                 docker rm flask-app || echo "flask-app not running"
                 docker stop nginx || echo "nginx not running"
