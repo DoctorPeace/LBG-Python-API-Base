@@ -3,17 +3,36 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                sh '''
-                ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
-                docker stop flask-app || echo "flask-app not running"
-                docker rm flask-app || echo "flask-app not running"
-                docker stop nginx || echo "nginx not running"
-                docker rm nginx || echo "nginx not running"
-                docker rmi drpeace/python-api || echo "Python image does not exist"
-                docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
-                docker network create project || echo "network already exists"
-                '''
-           }
+                script {
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
+                        docker stop flask-app || echo "flask-app not running"
+                        docker rm flask-app || echo "flask-app not running"
+                        docker stop nginx || echo "nginx not running"
+                        docker rm nginx || echo "nginx not running"
+                        docker rmi drpeace/python-api || echo "Python image does not exist"
+                        docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
+                        docker network create project || echo "network already exists"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        ssh -i ~/.ssh/id_rsa jenkins@10.200.0.16 << EOF
+                        docker stop flask-app || echo "flask-app not running"
+                        docker rm flask-app || echo "flask-app not running"
+                        docker stop nginx || echo "nginx not running"
+                        docker rm nginx || echo "nginx not running"
+                        docker rmi drpeace/python-api || echo "Python image does not exist"
+                        docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
+                        docker network create project || echo "network already exists"
+                        '''
+                    } else {
+                        sh '''
+                        echo "Init - Unrecognised branch"
+                        '''
+                    }    
+                }   
+            }
         }
         stage('Build') {
             steps {
