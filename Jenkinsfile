@@ -99,7 +99,7 @@ pipeline {
                         echo "Cleanup - Unrecognised branch"
                     }
                 } 
-           }
+            }
         }
     }
 }
