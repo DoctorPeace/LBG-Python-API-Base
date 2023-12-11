@@ -14,6 +14,7 @@ pipeline {
                         docker rmi drpeace/python-api || echo "Python image does not exist"
                         docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
                         docker network create project || echo "network already exists"
+                        echo "Main:Build successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
@@ -25,6 +26,7 @@ pipeline {
                         docker rmi drpeace/python-api || echo "Python image does not exist"
                         docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
                         docker network create project || echo "network already exists"
+                        echo "Dev:Build successful"
                         '''
                     } else {
                         sh '''
