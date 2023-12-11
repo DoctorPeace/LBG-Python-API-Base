@@ -10,8 +10,8 @@ pipeline {
                 docker rm flask-app || echo "flask-app not running"
                 docker stop nginx || echo "nginx not running"
                 docker rm nginx || echo "nginx not running"
-                docker rmi drpeace/python-api || echo "Image does not exist"
-                docker rmi drpeace/flask-nginx || echo "Image does not exist"
+                docker rmi drpeace/python-api || echo "Python image does not exist"
+                docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
                 docker network create project || echo "network already exists"
                 '''
            }
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 sh '''
                 docker build -t drpeace/python-api -t drpeace/python-api:v${BUILD_NUMBER} .
-                docker build -t drpeace/flask-nginx -t drpeace/flash-nginx:v${BUILD_NUMBER} ./nginx
+                docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:v${BUILD_NUMBER} ./nginx
                 '''
            }
         }
