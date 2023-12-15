@@ -80,13 +80,13 @@ pipeline {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
                         kubectl apply -f ./kubernetes --namespace production
-                        docker run -d --name flask-deployment --network project drpeace/python-api
+                        docker set image -d --name flask-deployment --network project drpeace/python-api
                         echo "main:Build successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
                         kubectl apply -f ./kubernetes --namespace development
-                        docker run -d --name flask-deployment --network project drpeace/python-api
+                        docker set image -d --name flask-deployment --network project drpeace/python-api
                         echo "dev:Build successful"
                         '''
                     } else {
