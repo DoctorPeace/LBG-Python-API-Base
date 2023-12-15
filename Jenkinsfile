@@ -1,10 +1,5 @@
 pipeline {
     agent any
-    environment {
-        GCR_CREDENTIALS_ID = 'jenkins-gcr' // ID in Jenkins credentials
-        IMAGE_NAME = 'christaylor-python-api'
-        GCR_URL = 'gcr.io/lbg-mea-16'
-    }
     stages {
         stage('Init') {
             steps {
