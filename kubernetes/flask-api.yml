@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+  labels:
+    app: flask-api
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: flask-api
+  strategy:
+    rollingUpdate:
+      maxSurge: 20%
+      maxUnavailable: 20%
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+      - name: flask-api-container
+        image: gcr.io/lbg-mea-16/christaylor-flask-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-api-service
+spec:
+  type: ClusterIP
+  selector:
+    app: flask-api
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080

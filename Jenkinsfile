@@ -3,53 +3,114 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                sh '''
-                ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
-                docker stop flask-app || echo "flask-app not running"
-                docker rm flask-app || echo "flask-app not running"
-                docker stop nginx || echo "nginx not running"
-                docker rm nginx || echo "nginx not running"
-                docker rmi drpeace/python-api || echo "Python image does not exist"
-                docker rmi drpeace/flask-nginx || echo "Flask image does not exist"
-                docker network create project || echo "network already exists"
-                '''
-           }
+                script {
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        kubectl create ns prod || echo "namespace prod already exists"
+                        echo "main:Init successful"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        kubectl create ns dev || echo "namespace dev already exists"
+                        echo "dev:Init successful"
+                        '''
+                    } else {
+                        sh '''
+                        echo "Init - Unrecognised branch"
+                        '''
+                    }    
+                }   
+            }
         }
         stage('Build') {
             steps {
-                sh '''
-                docker build -t drpeace/python-api -t drpeace/python-api:v${BUILD_NUMBER} .
-                docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:v${BUILD_NUMBER} ./nginx
-                '''
-           }
+                script {
+			        // Branch related actions
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        docker build -t gcr.io/lbg-mea-16/christaylor-flask-api -t gcr.io/lbg-mea-16/christaylor-flask-api:prod-v${BUILD_NUMBER} .
+                        echo "main:Build not required in main"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        docker build -t gcr.io/lbg-mea-16/christaylor-flask-api -t gcr.io/lbg-mea-16/christaylor-flask-api:dev-v${BUILD_NUMBER} .
+                        echo "dev:Build successful"
+                        '''
+                    } else {
+                        sh '''
+                        echo "Build - Unrecognised branch"
+                        '''
+                    }
+                }
+            }
         }
         stage('Push') {
             steps {
-                sh '''
-                docker push drpeace/python-api
-                docker push drpeace/python-api:v${BUILD_NUMBER}
-                docker push drpeace/flask-nginx
-                docker push drpeace/flask-nginx:v${BUILD_NUMBER}
-                '''
+                script {
+ 			        // Branch related actions
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        docker push gcr.io/lbg-mea-16/christaylor-flask-api
+                        docker push gcr.io/lbg-mea-16/christaylor-flask-api:prod-v${BUILD_NUMBER}
+                        echo "main:Push successful"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        docker push gcr.io/lbg-mea-16/christaylor-flask-api
+                        docker push gcr.io/lbg-mea-16/christaylor-flask-api:dev-v${BUILD_NUMBER}
+                        echo "dev:Push successful"
+                        '''
+                    } else {
+                        sh '''
+                        echo "Push - Unrecognised branch"
+                        '''
+                    }
+                }    
            }
         }
         stage('Deploy') {
             steps {
-                sh '''
-                ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
-                docker run -d --name flask-app --network project drpeace/python-api
-                docker run -d -p 80:80 --name nginx --network project drpeace/flask-nginx
-                '''
+                script {
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        kubectl apply -f ./kubernetes -n prod 
+                        kubectl set image deployment/flask-api-deployment flask-api-container=gcr.io/lbg-mea-16/christaylor-flask-api:prod-v${BUILD_NUMBER} -n prod
+                        echo "main:Deploy successful"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        kubectl apply -f ./kubernetes -n dev
+                        kubectl set image deployment/flask-api-deployment flask-api-container=gcr.io/lbg-mea-16/christaylor-flask-api:dev-v${BUILD_NUMBER} -n dev
+                        echo "dev:Deploy successful"
+                        '''
+                    } else {
+                        echo "Deploy - Unrecognised branch"
+                    }
+                }
             }
         }
         stage('Cleanup') {
             steps {
+                script {
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        sh '''
+                        docker rmi gcr.io/lbg-mea-16/christaylor-flask-api:prod-v${BUILD_NUMBER}
+                        echo "main:Cleanup completed"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        sh '''
+                        docker rmi gcr.io/lbg-mea-16/christaylor-flask-api:dev-v${BUILD_NUMBER}
+                        echo "dev:Cleanup completed"
+                        '''
+                    } else if (env.GIT_BRANCH == 'origin/dev') {
+                        echo "Cleanup - Unrecognised branch"
+                    }
+                }
                 sh '''
-                docker system prune -f
-                docker rmi drpeace/python-api:v${BUILD_NUMBER}
-                docker rmi drpeace/flask-nginx:v${BUILD_NUMBER}
+                docker rmi gcr.io/lbg-mea-16/christaylor-flask-api:latest
+                docker system prune -f 
                 '''
-           }
+            }
         }
     }
 }
