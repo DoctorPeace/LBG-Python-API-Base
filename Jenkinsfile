@@ -6,12 +6,12 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        kubectl create namespace production || echo "namespace production already exists"
+                        kubectl create namespace prod || echo "namespace prod already exists"
                         echo "main:Init successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        kubectl create namespace development || echo "namespace development already exists"
+                        kubectl create namespace dev || echo "namespace dev already exists"
                         echo "dev:Init successful"
                         '''
                     } else {
@@ -28,14 +28,12 @@ pipeline {
 			        // Branch related actions
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        docker build -t drpeace/python-api -t drpeace/python-api:prod-v${BUILD_NUMBER} .
-                        docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:prod-v${BUILD_NUMBER} ./nginx                        
+                        docker build -t drpeace/flask-api -t drpeace/flask-api:prod-v${BUILD_NUMBER} .
                         echo "main:Build not required in main"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        docker build -t drpeace/python-api -t drpeace/python-api:dev-v${BUILD_NUMBER} .
-                        docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:dev-v${BUILD_NUMBER} ./nginx
+                        docker build -t drpeace/flask-api -t drpeace/flask-api:dev-v${BUILD_NUMBER} .
                         echo "dev:Build successful"
                         '''
                     } else {
@@ -52,18 +50,14 @@ pipeline {
  			        // Branch related actions
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        docker push drpeace/python-api
-                        docker push drpeace/python-api:prod-v${BUILD_NUMBER}
-                        docker push drpeace/flask-nginx
-                        docker push drpeace/flask-nginx:prod-v${BUILD_NUMBER}
+                        docker push drpeace/flask-api
+                        docker push drpeace/flask-api:prod-v${BUILD_NUMBER}
                         echo "main:Push successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        docker push drpeace/python-api
-                        docker push drpeace/python-api:dev-v${BUILD_NUMBER}
-                        docker push drpeace/flask-nginx
-                        docker push drpeace/flask-nginx:dev-v${BUILD_NUMBER}
+                        docker push drpeace/flask-api
+                        docker push drpeace/flask-api:dev-v${BUILD_NUMBER}
                         echo "dev:Push successful"
                         '''
                     } else {
@@ -79,14 +73,14 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        kubectl apply -f ./kubernetes --namespace production
-                        kubectl set image deployment/flask-deployment flask-container=drpeace/python-api:prod-v${BUILD_NUMBER} -n production
+                        kubectl apply -f ./kubernetes -n prod 
+                        kubectl set image deployment/flask-deployment flask-api-container=drpeace/python-api:prod-v${BUILD_NUMBER} -n prod
                         echo "main:Deploy successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        kubectl apply -f ./kubernetes --namespace development
-                        kubectl set image deployment/flask-deployment flask-container=drpeace/python-api:dev-v${BUILD_NUMBER} -n development
+                        kubectl apply -f ./kubernetes -n dev
+                        kubectl set image deployment/flask-deployment flask-api-container=drpeace/python-api:dev-v${BUILD_NUMBER} -n dev
                         echo "dev:Deploy successful"
                         '''
                     } else {
@@ -100,18 +94,22 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
+                        docker rmi drpeace/python-api:prod-v${BUILD_NUMBER}
                         docker system prune -f
                         echo "main:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
+                        docker rmi drpeace/python-api:dev-v${BUILD_NUMBER}
                         docker system prune -f
                         echo "dev:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         echo "Cleanup - Unrecognised branch"
                     }
-                } 
+                }
+                docker system prune -f 
+                docker rmi drpeace/python-api
             }
         }
     }

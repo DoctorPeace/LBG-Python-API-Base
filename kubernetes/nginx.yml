@@ -22,7 +22,7 @@ data:
       server {
         listen 80;
         location / {
-          proxy_pass http://flask-service:5500;
+          proxy_pass http://flask-api-service:8080/index.html;
         }
       }
     }
@@ -53,7 +53,7 @@ spec:
           name: nginx-config  # referencing the contents of the ConfigMap
       containers:
       - name: nginx-container
-        image: drpeace/flask-nginx:latest
+        image: nginx:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
