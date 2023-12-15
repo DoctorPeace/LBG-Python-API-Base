@@ -33,12 +33,14 @@ pipeline {
 			        // Branch related actions
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
+                        docker build -t drpeace/python-api -t drpeace/python-api:prod-v${BUILD_NUMBER} .
+                        docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:prod-v${BUILD_NUMBER} ./nginx                        
                         echo "Build not required in main"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        docker build -t drpeace/python-api -t drpeace/python-api:v${BUILD_NUMBER} .
-                        docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:v${BUILD_NUMBER} ./nginx
+                        docker build -t drpeace/python-api -t drpeace/python-api:dev-v${BUILD_NUMBER} .
+                        docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:dev-v${BUILD_NUMBER} ./nginx
                         echo "Build successful"
                         '''
                     } else {
