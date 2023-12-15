@@ -6,7 +6,7 @@ cffi
 charset-normalizer
 click
 colorama
-Flask
+Flask==2.2
 Flask-API
 Flask-SQLAlchemy
 greenlet
