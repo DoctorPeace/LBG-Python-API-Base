@@ -95,21 +95,21 @@ pipeline {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
                         docker rmi drpeace/python-api:prod-v${BUILD_NUMBER}
-                        docker system prune -f
                         echo "main:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
                         docker rmi drpeace/python-api:dev-v${BUILD_NUMBER}
-                        docker system prune -f
                         echo "dev:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         echo "Cleanup - Unrecognised branch"
                     }
                 }
+                sh '''
                 docker system prune -f 
                 docker rmi drpeace/python-api
+                '''
             }
         }
     }
