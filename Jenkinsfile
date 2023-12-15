@@ -81,13 +81,13 @@ pipeline {
                         sh '''
                         kubectl apply -f ./kubernetes --namespace production
                         kubectl set image deployment/flask-deployment flask-container=drpeace/python-api:prod-v${BUILD_NUMBER} -n production
-                        echo "main:Build successful"
+                        echo "main:Deploy successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
                         kubectl apply -f ./kubernetes --namespace development
                         kubectl set image deployment/flask-deployment flask-container=drpeace/python-api:dev-v${BUILD_NUMBER} -n development
-                        echo "dev:Build successful"
+                        echo "dev:Deploy successful"
                         '''
                     } else {
                         echo "Deploy - Unrecognised branch"
