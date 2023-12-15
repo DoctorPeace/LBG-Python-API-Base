@@ -35,13 +35,13 @@ pipeline {
                         sh '''
                         docker build -t drpeace/python-api -t drpeace/python-api:prod-v${BUILD_NUMBER} .
                         docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:prod-v${BUILD_NUMBER} ./nginx                        
-                        echo "Build not required in main"
+                        echo "main:Build not required in main"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
                         docker build -t drpeace/python-api -t drpeace/python-api:dev-v${BUILD_NUMBER} .
                         docker build -t drpeace/flask-nginx -t drpeace/flask-nginx:dev-v${BUILD_NUMBER} ./nginx
-                        echo "Build successful"
+                        echo "dev:Build successful"
                         '''
                     } else {
                         sh '''
@@ -61,7 +61,7 @@ pipeline {
                         docker push drpeace/python-api:prod-v${BUILD_NUMBER}
                         docker push drpeace/flask-nginx
                         docker push drpeace/flask-nginx:prod-v${BUILD_NUMBER}
-                        echo "Push not required in main"
+                        echo "main:Push successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
@@ -69,7 +69,7 @@ pipeline {
                         docker push drpeace/python-api:dev-v${BUILD_NUMBER}
                         docker push drpeace/flask-nginx
                         docker push drpeace/flask-nginx:dev-v${BUILD_NUMBER}
-                        echo "Push successful"
+                        echo "dev:Push successful"
                         '''
                     } else {
                         sh '''
@@ -84,17 +84,15 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        ssh -i ~/.ssh/id_rsa jenkins@10.154.0.53 << EOF
-                        docker run -d --name flask-app --network project drpeace/python-api
-                        docker run -d -p 80:80 --name nginx --network project drpeace/flask-nginx
-                        echo "Main:Build successful"
+                        kubectl apply -f ./kubernetes --namespace production
+                        docker run -d --name flask-deployment --network project drpeace/python-api
+                        echo "main:Build successful"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
-                        ssh -i ~/.ssh/id_rsa jenkins@10.200.0.16 << EOF
-                        docker run -d --name flask-app --network project drpeace/python-api
-                        docker run -d -p 80:80 --name nginx --network project drpeace/flask-nginx
-                        echo "Dev:Build successful"
+                        kubectl apply -f ./kubernetes --namespace development
+                        docker run -d --name flask-deployment --network project drpeace/python-api
+                        echo "dev:Build successful"
                         '''
                     } else {
                         echo "Deploy - Unrecognised branch"
@@ -107,13 +105,13 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'origin/main') {
                         sh '''
-                        echo "rmi not required in main"
+                        docker system prune -f
+                        echo "main:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         sh '''
                         docker system prune -f
-                        docker rmi drpeace/python-api:v${BUILD_NUMBER}
-                        docker rmi drpeace/flask-nginx:v${BUILD_NUMBER}
+                        echo "dev:Cleanup completed"
                         '''
                     } else if (env.GIT_BRANCH == 'origin/dev') {
                         echo "Cleanup - Unrecognised branch"
